@@ -1,11 +1,44 @@
-Using the provided code that can be downloaded from this github add a new class that inherits from game.cpp in the same way TicTacToe.cpp does and implement a working version of the game Connect 4. The game should be added as a fourth choice from the menu so the choices are Tic Tac Toe, Checkers, Othello and now Connect 4.
+Class layout
+classes/
+  Connect4.h / Connect4.cpp   <-- new game class
+Game.h / Game.cpp             <-- base game framework
+Grid.h / Grid.cpp             <-- grid & square helpers
+Application.cpp               <-- menu, app loop, render/update glue
+TicTacToe.h / TicTacToe.cpp   <-- reference for Bit creation/placement patterns
 
-The game must be playable by both by 2 people and vs. an AI. Your implementation must check for the winning condition, and display that on the right hand side the same way the current setup does for tic-tac-toe. The stopGame() method is expected to clean up and delete any memory allocated.
+Inheritance: Connect4 : public Game
+Uses the same lifecycle hooks and UI behavior as existing games.
 
-Look at the new Grid.cpp class and see how it is used in Checkers.cpp for a good understanding about laying out a useable grid.
+Board model:
+Internally stores the board as a flat vector _board of size 7 * 6 with values {0=empty, 1=P1, 2=P2} plus a _heights[7] array tracking how many pieces are in each column (from bottom). This makes “drop into a column” O(1) and enables very fast AI simulation (make/undo moves).
 
-For extra credit, when a game piece is added to the board, make it animate into place instead of just appearing in it's final spot.
+Rendering:
+Uses Grid to create a 7×6 layout (initializeSquares), then spawns Bit objects for yellow/red pieces. Bit creation mirrors TicTacToe:
+new Bit()
+LoadTextureFromFile("yellow.png" / "red.png")
+setOwner(getPlayerAt(0 or 1))
+square->setBit(bit)
 
-Graphic files are provided for the game pieces called yellow.png and red.png.
+Input:
+Override actionForEmptyHolder(BitHolder& holder). Clicking any square in a column translates to that column index. The piece is added to the lowest open slot in that column. Drag-moving is disabled (Connect 4 doesn’t move pieces once placed).
 
-For the submission, create a new github based on the above code-base and provide a link to that along with a complete readme.md on how your implementation works.
+Turn flow/game over:
+After each placement, call endTurn(). Winner/draw is checked via the usual framework path. Guard both human input and AI updates so no more moves can be made after game over—only Reset remains active.
+
+Win/Draw detection:
+Efficient scans over 4-cell windows for the current tag (1/2) across:
+Horizontal windows x..x+3
+Vertical windows y..y+3
+Diagonal / and \ windows
+
+AI (minimax + heuristic):
+Depth-limited minimax (default depth 5) with α-β pruning. Heuristic favors:
+Center column occupancy (slight bias)
+“Windows” where a 4-cell segment has 2-in-a-row (open), 3-in-a-row (one open), or 4-in-a-row (win)
+AI score minus opponent score for balance
+
+State save/restore:
+stateString() encodes the board as 42 characters ('0'..'2'), row-major from top. setStateString() rebuilds both memory and visuals (destroy bits, then re-spawn based on the chars). This lets you serialize/deserialize games cleanly.
+
+Cleanup:
+stopGame() destroys all bits on squares and deletes the grid. The destructor also releases the grid .
