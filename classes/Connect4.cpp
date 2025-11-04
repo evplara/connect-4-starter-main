@@ -87,6 +87,9 @@ void Connect4::setTagAt(int x, int y, int tag, bool animate) {
 }
 
 bool Connect4::actionForEmptyHolder(BitHolder &holder) {
+	if (checkForWinner() || checkForDraw())
+        return false;
+
     int hx=-1, hy=-1;
     if (!holderToXY(holder, hx, hy)) return false;
 
@@ -177,6 +180,9 @@ void Connect4::setStateString(const std::string &s) {
 
 // AI
 void Connect4::updateAI() {
+	if (checkForWinner() || checkForDraw())
+        return;
+		
     int currentTag = (getCurrentPlayer()->playerNumber() == 0) ? 1 : 2;
     int bestScore = 0;
     int bestCol = findBestAIMove(currentTag, /*depth=*/5, bestScore);
