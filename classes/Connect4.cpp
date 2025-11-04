@@ -7,7 +7,7 @@ Connect4::Connect4() {
     _board.assign(_cols * _rows, 0);
     _heights.assign(_cols, 0);
 
-    setAIPlayer(1);
+    // setAIPlayer(1);
 }
 
 Connect4::~Connect4() { stopGame(); }

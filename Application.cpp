@@ -64,7 +64,44 @@ namespace ClassGame {
                 } else {
                     ImGui::Text("Current Player Number: %d", game->getCurrentPlayer()->playerNumber());
                     ImGui::Text("Current Board State: %s", game->stateString().c_str());
-                }
+                    if (game && game->gameHasAI()) {
+                        ImGui::Separator();
+                        ImGui::TextUnformatted("Mode");
+
+                        static int mode = 0; 
+                        int prevMode = mode;
+
+                        // Render buttons
+                        ImGui::RadioButton("Player vs Player", &mode, 0); ImGui::SameLine();
+                        ImGui::RadioButton("Human vs AI (AI = P1)", &mode, 1); ImGui::SameLine();
+                        ImGui::RadioButton("Human vs AI (AI = P2)", &mode, 2); ImGui::SameLine();
+                        ImGui::RadioButton("AI vs AI", &mode, 3);
+
+                        if (mode != prevMode){
+                            if (mode == 0) { // PvP
+                                game->getPlayerAt(0)->setAIPlayer(false);
+                                game->getPlayerAt(1)->setAIPlayer(false);
+                                game->_gameOptions.AIvsAI = false;
+                            } else if (mode == 1) { // AI = Player 1
+                                game->getPlayerAt(0)->setAIPlayer(true);
+                                game->getPlayerAt(1)->setAIPlayer(false);
+                                game->_gameOptions.AIvsAI = false;
+                            } else if (mode == 2) { // AI = Player 2
+                                game->getPlayerAt(0)->setAIPlayer(false);
+                                game->getPlayerAt(1)->setAIPlayer(true);
+                                game->_gameOptions.AIvsAI = false;
+                            } else { // AI vs AI
+                                game->getPlayerAt(0)->setAIPlayer(true);
+                                game->getPlayerAt(1)->setAIPlayer(true);
+                                game->_gameOptions.AIvsAI = true;
+                            }
+                            gameOver = false;
+                            gameWinner = -1;
+                            game->stopGame();
+                            game->setUpBoard();
+                        }
+                    }
+                }    
                 ImGui::End();
 
                 ImGui::Begin("GameWindow");
